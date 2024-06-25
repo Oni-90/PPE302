@@ -1,11 +1,8 @@
 from django.db import models
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 
 
-
-# Create your models here.
-
-#model Organisation
+# Model Organisation
 class Organisation(models.Model):
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=100)
@@ -21,8 +18,21 @@ class Organisation(models.Model):
         """
         return check_password(raw_password, self.password)
 
+    def set_password(self, raw_password):
+        """
+        Définit le mot de passe pour l'organisation en utilisant un hachage sécurisé.
+        """
+        self.password = make_password(raw_password)
+        self.save()
 
-#model Agent
+    def save(self, *args, **kwargs):
+        # Hash the password if it's a plain password
+        if not self.password.startswith('pbkdf2_'):
+            self.set_password(self.password)
+        super(Organisation, self).save(*args, **kwargs)
+
+
+# Model Agent
 class Agent(models.Model):
     firstname = models.CharField(max_length=100)
     lastname = models.CharField(max_length=100)
@@ -31,9 +41,33 @@ class Agent(models.Model):
     phone = models.CharField(max_length=100)
     email = models.EmailField(max_length=100)
     password = models.CharField(max_length=255)
-    organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='agents')
+   # organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE, related_name='agents')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+        self.save()
+
+    def save(self, *args, **kwargs):
+        # Hash the password if it's a plain password
+        if not self.password.startswith('pbkdf2_'):
+            self.set_password(self.password)
+        super(Agent, self).save(*args, **kwargs)
+
+class OrganisationToken(models.Model):
+    key = models.CharField(max_length=40, primary_key=True)
+    organisation = models.OneToOneField(Organisation, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+
+class AgentToken(models.Model):
+    key = models.CharField(max_length=40, primary_key=True)
+    agent = models.OneToOneField(Agent, on_delete=models.CASCADE)
+    created = models.DateTimeField(auto_now_add=True)
+
 
 
 #model CensusType

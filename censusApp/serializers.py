@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CensusType, Organisation, Agent, Census, CensusForm, HousingCensus, PopulationCensus,AgriculturalCensus
+from .models import AgentToken, CensusType, Organisation, Agent, Census, CensusForm, HousingCensus, OrganisationToken, PopulationCensus,AgriculturalCensus
 
 #creating my serializers
 
@@ -47,16 +47,43 @@ class AgriculturalCensusSerializer(serializers.ModelSerializer):
 class AgentLoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = Agent
-        fields = ['username', 'password']  # Spécifiez les champs que vous voulez utiliser pour le login
+        fields = ['username', 'password']
         extra_kwargs = {
-            'password': {'write_only': True}  # Optionnel : Marque le champ "password" comme "write-only"
+            'password': {'write_only': True}
         }
+
+    def validate(self, data):
+        username = data.get('username')
+        password = data.get('password')
+
+        if not username or not password:
+            raise serializers.ValidationError("Both username and password are required.")
+        
+        return data
 
 class OrganisationLoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organisation
-        fields = ['name', 'password']  # Spécifiez les champs que vous voulez utiliser pour le login
+        fields = ['name', 'password']
         extra_kwargs = {
-            'password': {'write_only': True}  # Optionnel : Marque le champ "password" comme "write-only"
+            'password': {'write_only': True}
         }
 
+    def validate(self, data):
+        name = data.get('name')
+        password = data.get('password')
+
+        if not name or not password:
+            raise serializers.ValidationError("Both name and password are required.")
+        
+        return data
+
+class AgentTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AgentToken
+        fields = ['key', 'agent', 'created']
+
+class OrganisationTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrganisationToken
+        fields = ['key', 'organisation', 'created']
